@@ -1,0 +1,28 @@
+# ── PashuMitra AI — Python dependencies ──────────────────────────────────────
+# Install: pip install -r requirements.txt
+
+# Web framework
+Flask
+flask-cors
+Werkzeug
+gunicorn          # production WSGI server for Render/Railway/Heroku
+
+# Database
+SQLAlchemy          # declarative_base moved to sqlalchemy.orm in 2.x
+
+# AI / LLM
+groq
+
+# HTTP client (WhatsApp webhook outbound calls)
+requests
+
+# Utilities
+python-dotenv
+
+# ── Optional: voice transcription (heavy, skip on Render free tier) ──────────
+# openai-whisper==20250625
+
+# ── Optional: image-based diagnosis (Phase 2) ────────────────────────────────
+# pillow==10.2.0
+# torch==2.1.0
+# transformers==4.36.0

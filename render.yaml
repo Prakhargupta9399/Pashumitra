@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: pashumitra-ai
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:flask_app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: SKIP_WHISPER_LOAD
+        value: "1"
+      - key: ENVIRONMENT
+        value: production
+      - key: DAILY_FREE_LIMIT
+        value: "50"
+      - key: GROQ_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
