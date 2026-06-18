@@ -139,12 +139,24 @@ def feedback():
         db = SessionLocal()
         log = db.query(QueryLog).filter(QueryLog.phone == phone).order_by(QueryLog.id.desc()).first()
         if log:
-            log.query_text = (log.query_text or "") + f" [feedback:{'helpful' if helpful else 'not_helpful'}]"
+            log.helpful = helpful
             db.commit()
         db.close()
     except Exception as e:
         logger.warning("Feedback log error: %s", e)
     return jsonify({"status": "ok"})
+
+@flask_app.route("/api/feedback/stats")
+def feedback_stats():
+    try:
+        db = SessionLocal()
+        total = db.query(QueryLog).filter(QueryLog.helpful.isnot(None)).count()
+        helpful_count = db.query(QueryLog).filter(QueryLog.helpful == True).count()
+        db.close()
+        pct = round((helpful_count / total * 100), 1) if total > 0 else 0
+        return jsonify({"total_rated": total, "helpful": helpful_count, "helpful_pct": pct})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @flask_app.route("/api/health")
 def health():
