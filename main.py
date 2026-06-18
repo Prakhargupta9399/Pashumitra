@@ -130,6 +130,22 @@ def diagnose():
 def usage(phone):
     return jsonify(get_usage(phone))
 
+@flask_app.route("/api/feedback", methods=["POST"])
+def feedback():
+    body = request.json or {}
+    phone = body.get("phone", "demo")
+    helpful = body.get("helpful", True)
+    try:
+        db = SessionLocal()
+        log = db.query(QueryLog).filter(QueryLog.phone == phone).order_by(QueryLog.id.desc()).first()
+        if log:
+            log.query_text = (log.query_text or "") + f" [feedback:{'helpful' if helpful else 'not_helpful'}]"
+            db.commit()
+        db.close()
+    except Exception as e:
+        logger.warning("Feedback log error: %s", e)
+    return jsonify({"status": "ok"})
+
 @flask_app.route("/api/health")
 def health():
     return jsonify({"status": "ok", "groq": _groq_ok, "ai_engine": ai_engine.loaded})
@@ -291,6 +307,7 @@ footer{text-align:center;font-size:11px;color:var(--muted);padding:10px 0 6px}
   <div style="font-size:28px">🐄</div>
   <div class="brand"><h1>पशुमित्र AI</h1><p>पशु चिकित्सा सहायक — Chhatarpur Pilot</p></div>
   <div class="live-pill"><div class="dot" id="sdot"></div>LIVE</div>
+  <button onclick="toggleLang()" id="langBtn" style="margin-left:8px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.4);color:#fff;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer">EN</button>
 </header>
 
 <div class="page">
@@ -347,6 +364,15 @@ footer{text-align:center;font-size:11px;color:var(--muted);padding:10px 0 6px}
 
 <script>
 const PHONE = "web_" + Math.random().toString(36).slice(2,8);
+let currentLang = 'hi';
+
+function toggleLang(){
+  currentLang = currentLang === 'hi' ? 'en' : 'hi';
+  document.getElementById('langBtn').textContent = currentLang === 'hi' ? 'EN' : 'हि';
+  document.getElementById('inp').placeholder = currentLang === 'hi'
+    ? 'लक्षण लिखें... जैसे: गाय खाना नहीं खा रही'
+    : 'Type symptoms... e.g. cow not eating';
+}
 
 function ts(){const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')}
 
@@ -368,6 +394,7 @@ function removeTyping(){const e=document.getElementById('typing');if(e)e.remove(
 function scroll(){const m=document.getElementById('msgs');m.scrollTop=m.scrollHeight;}
 
 function buildCard(local, llm_reply){
+  const cardId = 'c'+Date.now()+Math.random().toString(36).slice(2,6);
   const sev = local.severity || 'unknown';
   const sevLabel = {critical:'🔴 अति गंभीर',moderate:'🟡 सामान्य',mild:'🟢 हल्का',unknown:'⚪ अज्ञात'}[sev]||'';
   const conf = Math.round((local.confidence||0)*100);
@@ -379,7 +406,8 @@ function buildCard(local, llm_reply){
   ).join('');
 
   const emergencyHtml = local.emergency
-    ? `<div class="alert-row alert-emergency">🚨 गंभीर बीमारी! आज ही डॉक्टर बुलाएं — <a href="tel:07682248683" style="color:inherit">07682-248683</a></div>` : '';
+    ? `<div class="alert-row alert-emergency">🚨 गंभीर बीमारी! तुरंत डॉक्टर बुलाएं</div>
+       <a href="tel:07682248683" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#dc2626;color:#fff;padding:12px;border-radius:10px;font-size:15px;font-weight:800;text-decoration:none;margin:0 0 4px">📞 अभी कॉल करें — 07682-248683</a>` : '';
   const contagiousHtml = local.is_contagious
     ? `<div class="alert-row alert-contagious">⚠️ यह संक्रामक रोग है! अन्य पशुओं से तुरंत अलग करें!</div>` : '';
 
@@ -427,6 +455,11 @@ function buildCard(local, llm_reply){
     </div>
     <div style="font-size:11px;color:var(--muted);font-style:italic;width:100%">⚠️ यह AI सलाह है — गंभीर स्थिति में डॉक्टर से मिलें</div>
   </div>
+  <div class="feedback-row" id="fb-${cardId}" style="display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--border);align-items:center">
+    <span style="font-size:12px;color:var(--muted)">क्या यह सहायक था?</span>
+    <button onclick="feedback('${cardId}',true)" style="border:1px solid #86efac;background:#f0fdf4;color:#065f46;border-radius:8px;padding:5px 12px;font-size:13px;cursor:pointer">👍 हाँ</button>
+    <button onclick="feedback('${cardId}',false)" style="border:1px solid #fca5a5;background:#fff1f1;color:#b91c1c;border-radius:8px;padding:5px 12px;font-size:13px;cursor:pointer">👎 नहीं</button>
+  </div>
 </div>`;
 }
 
@@ -447,6 +480,13 @@ function addError(msg){
 function updateUsage(u){
   document.getElementById('ulbl').textContent=`आज: ${u.used}/${u.limit} सवाल`;
   document.getElementById('qc').textContent=u.used;
+}
+
+function feedback(cardId, helpful){
+  const row=document.getElementById('fb-'+cardId);
+  row.innerHTML=`<span style="font-size:12px;color:var(--g);font-weight:600">${helpful?'✅ धन्यवाद!':'🙏 माफ करें, सुधार करेंगे'}</span>`;
+  fetch('/api/feedback',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({phone:PHONE,helpful:helpful})}).catch(()=>{});
 }
 
 function ask(text){document.getElementById('inp').value=text;send();}
