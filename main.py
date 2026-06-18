@@ -420,9 +420,12 @@ function buildCard(local, llm_reply){
   </div>
   ${diffHtml}
   ${llmHtml}
-  <div class="card-foot">
-    <span>📍 ${local.nearest_shop||'नजदीकी पशु चिकित्सालय'}</span>
-    <span style="margin-left:auto">📞 <a href="tel:1962">1962</a></span>
+  <div class="card-foot" style="flex-direction:column;align-items:flex-start;gap:6px">
+    <div style="width:100%;display:flex;gap:16px;flex-wrap:wrap">
+      <span>📍 ${local.nearest_shop||'नजदीकी पशु चिकित्सालय'}</span>
+      <span style="margin-left:auto">📞 <a href="tel:1962">1962</a></span>
+    </div>
+    <div style="font-size:11px;color:var(--muted);font-style:italic;width:100%">⚠️ यह AI सलाह है — गंभीर स्थिति में डॉक्टर से मिलें</div>
   </div>
 </div>`;
 }
