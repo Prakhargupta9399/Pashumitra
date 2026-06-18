@@ -33,4 +33,5 @@ class QueryLog(Base):
     disease    = Column(String(200), nullable=True)
     severity   = Column(String(20), nullable=True)
     language   = Column(String(20), default="hindi")
+    helpful    = Column(Boolean, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
