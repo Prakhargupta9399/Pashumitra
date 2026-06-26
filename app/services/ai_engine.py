@@ -223,12 +223,21 @@ def _normalize(text: str) -> str:
 
 
 def _score(text_norm: str, entry: dict) -> float:
-    matched = sum(1 for kw in entry["kw"] if kw in text_norm)
-    if matched == 0:
-        return 0.0
-    # weight by how many of the entry's keywords matched (density)
-    density = min(matched / max(len(entry["kw"]), 1), 1.0)
-    return entry["conf"] * (0.35 + 0.65 * density)
+    matched = [kw for kw in entry["kw"] if kw in text_norm]
+    if not matched:
+        return 0.0, []
+    # Confidence grows with number of DISTINCT matched symptoms, not density
+    # against full keyword list (which unfairly punishes short farmer messages).
+    n = len(matched)
+    if n >= 4:
+        boost = 1.0
+    elif n == 3:
+        boost = 0.92
+    elif n == 2:
+        boost = 0.78
+    else:
+        boost = 0.55
+    return entry["conf"] * boost, matched
 
 
 class PashuAI:
@@ -302,19 +311,38 @@ class PashuAI:
 
     def _find_best(self, text: str) -> Dict[str, Any]:
         norm = _normalize(text)
-        scored = [(s, e) for e in SYMPTOMS_DB if (s := _score(norm, e)) > 0]
+        scored = []
+        for e in SYMPTOMS_DB:
+            s, matched_kw = _score(norm, e)
+            if s > 0:
+                scored.append((s, e, matched_kw))
         if not scored:
             return self._fallback(text)
         scored.sort(key=lambda x: x[0], reverse=True)
-        best_s, best = scored[0]
+        best_s, best, best_matched = scored[0]
         differential = [
             {"disease": e["disease"], "hindi": e["hindi"], "probability": f"{s:.0%}"}
-            for s, e in scored[1:3] if s >= best_s * 0.65
+            for s, e, _ in scored[1:3] if s >= best_s * 0.65
         ]
+        # Human-readable reason for the confidence score — shown to the farmer
+        # so the % is never a black box.
+        n = len(best_matched)
+        unique_symptoms = ", ".join(sorted(set(best_matched))[:4])
+        if n >= 4:
+            reason = f"आपके बताए {n} लक्षण ({unique_symptoms}) इस बीमारी से पूरी तरह मेल खाते हैं।"
+        elif n == 3:
+            reason = f"आपके बताए {n} लक्षण ({unique_symptoms}) इस बीमारी से अच्छी तरह मेल खाते हैं।"
+        elif n == 2:
+            reason = f"सिर्फ {n} लक्षण ({unique_symptoms}) मिले — पूरा यकीन के लिए और लक्षण बताएं या फोटो भेजें।"
+        else:
+            reason = f"सिर्फ 1 लक्षण ({unique_symptoms}) मिला — सटीक जानकारी के लिए कृपया और लक्षण बताएं।"
+
         return {
             "disease":    best["disease"],
             "hindi":      best["hindi"],
             "confidence": round(min(best_s, 0.95), 2),
+            "confidence_reason": reason,
+            "matched_symptoms_count": n,
             "severity":   best["severity"],
             "home_remedy":   best["remedy"],
             "medicine":      best["medicine"],
@@ -341,7 +369,10 @@ class PashuAI:
     def _fallback(self, msg: str) -> Dict[str, Any]:
         return {
             "disease": "Symptoms Unclear", "hindi": "लक्षण अस्पष्ट",
-            "confidence": 0.0, "severity": "unknown",
+            "confidence": 0.0,
+            "confidence_reason": "कोई जाना-पहचाना लक्षण नहीं मिला। कृपया और विस्तार से बताएं या फोटो भेजें।",
+            "matched_symptoms_count": 0,
+            "severity": "unknown",
             "home_remedy": "साफ पानी, संतुलित आहार दें। 24 घंटे नजर रखें।",
             "medicine": "अभी कुछ नहीं — और लक्षण बताएं या फोटो भेजें।",
             "dosage": "N/A",
