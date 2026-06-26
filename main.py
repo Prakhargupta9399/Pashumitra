@@ -435,6 +435,7 @@ function buildCard(local, llm_reply){
     <div class="disease-name">${local.hindi||'लक्षण अस्पष्ट'}</div>
     <div class="conf-badge">${sevLabel} &nbsp;|&nbsp; ${conf}% संभावना</div>
   </div>
+  <div style="padding:6px 16px 0;font-size:11.5px;color:var(--muted);font-style:italic">ℹ️ ${local.confidence_reason||''}</div>
   <div class="card-body">
     <div class="row"><div class="icon">🏠</div><div class="content">
       <div class="label">घर पर अभी करें:</div>
