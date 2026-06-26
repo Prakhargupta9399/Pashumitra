@@ -66,9 +66,9 @@ Format EXACTLY:
 🥗 आहार: [diet 1 line]
 🛡️ बचाव: [prevention 1 line]
 
-[if emergency]: 🚨 आज ही डॉक्टर बुलाएं — 07682-248683
+[if emergency]: 🚨 आज ही डॉक्टर बुलाएं — 1962 पर कॉल करें
 [if contagious]: ⚠️ संक्रामक रोग — अन्य पशुओं से अलग करें!
-📞 हेल्पलाइन: 1962"""
+📞 राष्ट्रीय पशु चिकित्सा हेल्पलाइन: 1962"""
 
 _sessions: dict = {}
 
@@ -212,7 +212,7 @@ def _build_whatsapp(r: dict) -> str:
         f"🥗 आहार: {r['diet_advice']}",
     ]
     if r.get("emergency"):
-        lines.append("🚨 तुरंत डॉक्टर बुलाएं — 07682-248683")
+        lines.append("🚨 तुरंत डॉक्टर बुलाएं — 1962 पर कॉल करें (राष्ट्रीय हेल्पलाइन)")
     lines.append("📞 हेल्पलाइन: 1962")
     return "\n".join(lines)
 
@@ -373,14 +373,25 @@ footer{text-align:center;font-size:11px;color:var(--muted);padding:10px 0 6px}
     </div>
   </div>
 
-  <div class="contact-bar">
-    <span>📞 जिला पशु चिकित्सा, छतरपुर:</span>
-    <a href="tel:07682248683">07682-248683</a>
+  <div class="contact-bar" id="districtBar" style="flex-direction:column;align-items:stretch;gap:8px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span>📍 आपका जिला/शहर बताएं ताकि सही डॉक्टर का नंबर मिले:</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input id="districtInp" type="text" placeholder="जैसे: छतरपुर, इंदौर, जयपुर..." style="flex:1;min-width:160px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit"/>
+      <button onclick="setDistrict()" style="background:var(--g);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer">सेट करें</button>
+      <button onclick="skipDistrict()" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer">छोड़ें (1962 इस्तेमाल होगा)</button>
+    </div>
+  </div>
+
+  <div class="contact-bar" id="contactBar" style="display:none">
+    <span>📞 आपके जिले का पशु चिकित्सा कार्यालय:</span>
+    <a href="tel:" id="districtPhoneLink">—</a>
     <div class="sep"></div>
-    <span>राष्ट्रीय हेल्पलाइन:</span>
+    <span>राष्ट्रीय हेल्पलाइन (हर जगह काम करती है):</span>
     <a href="tel:1962">1962</a>
     <div class="sep"></div>
-    <span style="font-size:12px;color:var(--muted)">24×7 उपलब्ध</span>
+    <button onclick="resetDistrict()" style="font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline">बदलें</button>
   </div>
 </div>
 
@@ -389,6 +400,51 @@ footer{text-align:center;font-size:11px;color:var(--muted);padding:10px 0 6px}
 <script>
 const PHONE = "web_" + Math.random().toString(36).slice(2,8);
 let currentLang = 'hi';
+
+// District-wise Animal Husbandry office numbers (MP focus, extendable).
+// 1962 always works nationwide as fallback — this is just a "better, local" option.
+const DISTRICT_VET_NUMBERS = {
+  'chhatarpur': '07682248683', 'छतरपुर': '07682248683',
+  'indore': '07312411468', 'इंदौर': '07312411468',
+  'bhopal': '07552661866', 'भोपाल': '07552661866',
+  'jabalpur': '07612626666', 'जबलपुर': '07612626666',
+  'gwalior': '07512340987', 'ग्वालियर': '07512340987',
+  'sagar': '07582226666', 'सागर': '07582226666',
+};
+
+let userDistrictPhone = null;
+
+function setDistrict(){
+  const val = document.getElementById('districtInp').value.trim().toLowerCase();
+  if(!val){ skipDistrict(); return; }
+  const found = DISTRICT_VET_NUMBERS[val];
+  document.getElementById('districtBar').style.display='none';
+  document.getElementById('contactBar').style.display='flex';
+  if(found){
+    userDistrictPhone = found;
+    document.getElementById('districtPhoneLink').textContent = found.replace(/(\d{5})(\d{6})/,'$1-$2');
+    document.getElementById('districtPhoneLink').href = 'tel:'+found;
+  } else {
+    // District not in our database yet — be honest, fall back to 1962 only
+    userDistrictPhone = null;
+    document.getElementById('districtPhoneLink').textContent = 'उपलब्ध नहीं — कृपया 1962 इस्तेमाल करें';
+    document.getElementById('districtPhoneLink').href = 'tel:1962';
+  }
+}
+
+function skipDistrict(){
+  userDistrictPhone = null;
+  document.getElementById('districtBar').style.display='none';
+  document.getElementById('contactBar').style.display='flex';
+  document.getElementById('districtPhoneLink').textContent = '1962 इस्तेमाल करें';
+  document.getElementById('districtPhoneLink').href = 'tel:1962';
+}
+
+function resetDistrict(){
+  document.getElementById('contactBar').style.display='none';
+  document.getElementById('districtBar').style.display='flex';
+  document.getElementById('districtInp').value='';
+}
 
 function ts(){const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')}
 
@@ -421,9 +477,13 @@ function buildCard(local, llm_reply){
     `<li><div class="num">${i+1}</div><span>${s}</span></li>`
   ).join('');
 
+  const emergencyPhone = userDistrictPhone || '1962';
+  const emergencyDisplay = userDistrictPhone
+    ? userDistrictPhone.replace(/(\d{5})(\d{6})/,'$1-$2')
+    : '1962 (राष्ट्रीय हेल्पलाइन)';
   const emergencyHtml = local.emergency
     ? `<div class="alert-row alert-emergency">🚨 गंभीर बीमारी! तुरंत डॉक्टर बुलाएं</div>
-       <a href="tel:07682248683" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#dc2626;color:#fff;padding:12px;border-radius:10px;font-size:15px;font-weight:800;text-decoration:none;margin:0 0 4px">📞 अभी कॉल करें — 07682-248683</a>` : '';
+       <a href="tel:${emergencyPhone}" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#dc2626;color:#fff;padding:12px;border-radius:10px;font-size:15px;font-weight:800;text-decoration:none;margin:0 0 4px">📞 अभी कॉल करें — ${emergencyDisplay}</a>` : '';
   const contagiousHtml = local.is_contagious
     ? `<div class="alert-row alert-contagious">⚠️ यह संक्रामक रोग है! अन्य पशुओं से तुरंत अलग करें!</div>` : '';
 
