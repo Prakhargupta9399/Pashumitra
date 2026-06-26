@@ -23,6 +23,18 @@ from app.models              import Farmer, QueryLog
 from app.limits              import check_and_increment, get_usage
 
 Base.metadata.create_all(bind=db_engine)
+
+# ── Auto-migration: add 'helpful' column if missing (SQLite doesn't auto-alter) ──
+try:
+    with db_engine.connect() as conn:
+        from sqlalchemy import text
+        existing_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(query_logs)"))]
+        if "helpful" not in existing_cols:
+            conn.execute(text("ALTER TABLE query_logs ADD COLUMN helpful BOOLEAN"))
+            conn.commit()
+            logger.info("Migration: added 'helpful' column to query_logs")
+except Exception as e:
+    logger.warning("Auto-migration check failed (non-fatal): %s", e)
 ai_engine.load()
 
 # Groq optional
@@ -378,14 +390,6 @@ footer{text-align:center;font-size:11px;color:var(--muted);padding:10px 0 6px}
 const PHONE = "web_" + Math.random().toString(36).slice(2,8);
 let currentLang = 'hi';
 
-function toggleLang(){
-  currentLang = currentLang === 'hi' ? 'en' : 'hi';
-  document.getElementById('langBtn').textContent = currentLang === 'hi' ? 'EN' : 'हि';
-  document.getElementById('inp').placeholder = currentLang === 'hi'
-    ? 'लक्षण लिखें... जैसे: गाय खाना नहीं खा रही'
-    : 'Type symptoms... e.g. cow not eating';
-}
-
 function ts(){const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')}
 
 function addUser(text){
@@ -500,6 +504,14 @@ function feedback(cardId, helpful){
   row.innerHTML=`<span style="font-size:12px;color:var(--g);font-weight:600">${helpful?'✅ धन्यवाद!':'🙏 माफ करें, सुधार करेंगे'}</span>`;
   fetch('/api/feedback',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({phone:PHONE,helpful:helpful})}).catch(()=>{});
+}
+
+function toggleLang(){
+  currentLang = currentLang === 'hi' ? 'en' : 'hi';
+  document.getElementById('langBtn').textContent = currentLang === 'hi' ? 'EN' : 'हि';
+  document.getElementById('inp').placeholder = currentLang === 'hi'
+    ? 'लक्षण लिखें... जैसे: गाय खाना नहीं खा रही'
+    : 'Type symptoms... e.g. cow not eating';
 }
 
 function ask(text){document.getElementById('inp').value=text;send();}
