@@ -238,6 +238,10 @@ header{background:linear-gradient(135deg,#1D9E75,#0d7a57);color:#fff;padding:0 2
 
 .page{max-width:800px;margin:0 auto;width:100%;padding:18px 14px 40px;flex:1;display:flex;flex-direction:column;gap:14px}
 
+.cow-stage{height:130px;display:flex;align-items:center;justify-content:center;perspective:600px;background:var(--gl);border-radius:14px;margin-bottom:4px;overflow:hidden}
+.cow-3d{animation:cowspin 7s linear infinite;transform-style:preserve-3d;font-size:60px}
+@keyframes cowspin{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}
+
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .stat{background:#fff;border-radius:var(--r);padding:14px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,.06)}
 .stat .n{font-size:22px;font-weight:800;color:var(--g)}.stat .l{font-size:11px;color:var(--muted);margin-top:2px}
@@ -335,6 +339,7 @@ footer{text-align:center;font-size:11px;color:var(--muted);padding:10px 0 6px}
 </header>
 
 <div class="page">
+  <div class="cow-stage"><div class="cow-3d">🐄</div></div>
   <div class="stats">
     <div class="stat"><div class="n">9+</div><div class="l">रोग पहचाने</div></div>
     <div class="stat"><div class="n" id="qc">0</div><div class="l">आज के सवाल</div></div>
