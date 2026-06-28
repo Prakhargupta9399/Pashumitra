@@ -333,7 +333,7 @@ footer{text-align:center;font-size:11px;color:var(--muted);padding:10px 0 6px}
 <body>
 <header>
   <div style="font-size:28px">🐄</div>
-  <div class="brand"><h1>पशुमित्र AI</h1><p>पशु चिकित्सा सहायक — Chhatarpur Pilot</p></div>
+  <div class="brand"><h1>पशुमित्र AI</h1><p>पशु चिकित्सा सहायक — हर राज्य के लिए</p></div>
   <div class="live-pill"><div class="dot" id="sdot"></div>LIVE</div>
   <button onclick="toggleLang()" id="langBtn" style="margin-left:8px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.4);color:#fff;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer">EN</button>
 </header>
@@ -400,7 +400,7 @@ footer{text-align:center;font-size:11px;color:var(--muted);padding:10px 0 6px}
   </div>
 </div>
 
-<footer>पशुमित्र AI — Chhatarpur, Madhya Pradesh | Pilot v1.0 | यह AI सलाह है — गंभीर स्थिति में डॉक्टर से मिलें</footer>
+<footer>पशुमित्र AI — भारत के किसानों के लिए | यह AI सलाह है — गंभीर स्थिति में डॉक्टर से मिलें</footer>
 
 <script>
 const PHONE = "web_" + Math.random().toString(36).slice(2,8);
